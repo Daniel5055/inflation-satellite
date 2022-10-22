@@ -1,35 +1,60 @@
 <script>
-  import L from 'leaflet';
   import { onMount } from 'svelte';
+  import * as d3 from 'd3'
 
+  let svgId
   onMount(async () => {
-    const map = L.map('mapid').setView([50, -0.1], 4);
+    const svg = d3.select(svgId);
+    
+    const width = +svg.attr('width');
+    const height = +svg.attr('height');
 
-    const x = await fetch('/countries.geojson').then((r) => r.json());
+    const projection = d3.geoMercator()
+     .scale(width / 2 / Math.PI)
+     .translate([width / 2, height / 2]);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      noWrap: true,
-      maxZoom: 6,
-      minZoom: 1,
-    }).addTo(map);
+    const mapData = await d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson");
 
-    console.log(x)
-    L.geoJSON(x).addTo(map);
+    svg.append('g')
+      .selectAll('path')
+      // @ts-ignore
+      .data(mapData.features)
+      .enter()
+      .append('path')
+      .attr('fill', '#69b3a2')
+      .attr('d', d3.geoPath().projection(projection))
+      .style('stroke', '#fff')
+
+    const g = svg.select('g');
+    console.log(g);
+
+    const zoom = d3.zoom().scaleExtent([1, 8]).on('zoom', zoomed)
+    svg.call(zoom);
+    function zoomed(event) {
+      console.log(event)
+      let {transform} = event;
+      if (Math.abs(transform.x) > width * (transform.k - 1)) {
+        transform.x = width * -(transform.k - 1) 
+      } else if (transform.x > 0) {
+        transform.x = 0;
+      }
+      if (Math.abs(transform.y) > height * (transform.k - 1)) {
+        transform.y = height * -(transform.k - 1) 
+      } else if (transform.y > 0) {
+        transform.y = 0;
+      }
+      g.attr('transform', transform)
+      g.attr('stroke', 1 / transform.k)
+    }
   })
 
 </script>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
-   integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
-   crossorigin=""/>
-<div id="mapid"></div>
+<svg bind:this={svgId} width="400" height="400" id="map"></svg>
 
 <style lang="css">
-  #mapid {
-    height: 400px;
-    width: 600px;
+  #map {
+    border: 1px solid whitesmoke
   }
 </style>
 
