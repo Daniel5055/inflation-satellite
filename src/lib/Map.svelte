@@ -2,18 +2,22 @@
   import { onMount } from 'svelte';
   import * as d3 from 'd3'
 
-  let svgId
+  let svgId;
+
+  let windowHeight;
+  let windowWidth;
+
   onMount(async () => {
     const svg = d3.select(svgId);
     
-    const width = +svg.attr('width');
-    const height = +svg.attr('height');
+    const width = 400;
+    const height = 400;
 
     const projection = d3.geoMercator()
      .scale(width / 2 / Math.PI)
      .translate([width / 2, height / 2]);
 
-    const mapData = await d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson");
+    const mapData = await d3.json("/custom.geo.json");
 
     svg.append('g')
       .selectAll('path')
@@ -24,22 +28,23 @@
       .attr('fill', '#69b3a2')
       .attr('d', d3.geoPath().projection(projection))
       .style('stroke', '#fff')
+      .style('stroke-width', '0.1')
 
     const g = svg.select('g');
-    console.log(g);
 
     const zoom = d3.zoom().scaleExtent([1, 8]).on('zoom', zoomed)
     svg.call(zoom);
     function zoomed(event) {
-      console.log(event)
       let {transform} = event;
+      const ratio = windowHeight / windowWidth;
+
       if (Math.abs(transform.x) > width * (transform.k - 1)) {
         transform.x = width * -(transform.k - 1) 
       } else if (transform.x > 0) {
         transform.x = 0;
       }
-      if (Math.abs(transform.y) > height * (transform.k - 1)) {
-        transform.y = height * -(transform.k - 1) 
+      if (Math.abs(transform.y) > height * (1 - ratio) + (transform.k - 1) * height) {
+        transform.y = height * -(1 - ratio) + -(transform.k - 1) * height 
       } else if (transform.y > 0) {
         transform.y = 0;
       }
@@ -50,11 +55,20 @@
 
 </script>
 
-<svg bind:this={svgId} width="400" height="400" id="map"></svg>
+<svelte:window bind:innerHeight={windowHeight} bind:innerWidth={windowWidth} />
+
+<div id="map-wrapper">
+  <svg bind:this={svgId} width="100%" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid" id="map"></svg>
+</div>
 
 <style lang="css">
+  #map-wrapper {
+    width: 100vw;
+    height: 100vh;
+    overflow-y: hidden;
+  }
+
   #map {
-    border: 1px solid whitesmoke
   }
 </style>
 
