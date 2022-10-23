@@ -22,7 +22,10 @@
     L.geoJSON(mapData, {
       onEachFeature: (feature, layer) => {
         layer.on('click', () => {
-          console.log(feature.properties.name)
+
+          // @ts-ignore
+          // Pan to box
+          map.fitBounds(layer.getBounds())
         })
       },
       style: {
@@ -75,11 +78,11 @@
     position: fixed;
     inset: 50% 50%;
     transform: translate(-50%, -50%);
-    filter: drop-shadow(0 0 2px #0008);
-    border-radius: 20px;
+    filter: drop-shadow(0 0 5px #000);
+    border-radius: 50px;
     width: 400px;
     height: 400px;
-    background-color: #BBB8;
+    background-color: #BBB1;
     transition: opacity 500ms ease-in;
   }
 </style>
