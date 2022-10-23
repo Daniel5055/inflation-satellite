@@ -14,13 +14,17 @@
         center: [48, -32],
         zoom: 4,
       })
-      .setMaxBounds(L.latLngBounds([-55, -180], [90, 180]))
+      .setMaxBounds(L.latLngBounds([-60, -180], [90, 180]))
       .setMaxZoom(6)
       .setMinZoom(3);
 
     // @ts-ignore
     L.geoJSON(mapData, {
-      clickable: false,
+      onEachFeature: (feature, layer) => {
+        layer.on('click', () => {
+          console.log(feature.properties.name)
+        })
+      },
       style: {
         stroke: true,
         fill: true,
@@ -44,8 +48,7 @@
    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
    crossorigin=""/>
 
-<div id="map-wrapper" style="filter: blur({mapBlurred ? '4px' : '0px'});">
-</div>
+<div id="map-wrapper" style="filter: blur({mapBlurred ? '4px' : '0px'});" />
 {#if !hidden}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div on:click={revealMap} id="map-cover" />
