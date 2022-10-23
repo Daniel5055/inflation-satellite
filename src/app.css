@@ -15,6 +15,11 @@
   -webkit-text-size-adjust: 100%;
 }
 
+.wrapped {
+  filter: blur(6px);
+  transition: filter 1s ease;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

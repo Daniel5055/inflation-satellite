@@ -2,9 +2,14 @@
   import { onMount } from 'svelte';
   import * as d3 from 'd3'
   import L from 'leaflet'
+  import CountryInfo from './CountryInfo.svelte'
 
   let mapBlurred = true;
   let hidden = false;
+  let focusCountry = null;
+  let focusLayer = null;
+
+  $: mapBlurred ? d3.select('.wrapped').style('filter', 'blur(4px)') : d3.select('.wrapped').style('filter', 'blur(0px)')
 
   onMount(async () => {
     const mapData = await d3.json("/custom.geo.json");
@@ -19,13 +24,23 @@
       .setMinZoom(3);
 
     // @ts-ignore
-    L.geoJSON(mapData, {
+    const mapLayer = L.geoJSON(mapData, {
       onEachFeature: (feature, layer) => {
+        // @ts-ignore
         layer.on('click', () => {
-
           // @ts-ignore
           // Pan to box
           map.fitBounds(layer.getBounds())
+          map.once('moveend', () => setTimeout(() => {
+            mapBlurred = true;
+          }, 200))
+          console.log(layer)
+          focusCountry = feature.properties.name;
+
+          focusLayer && map.removeLayer(focusLayer);
+
+          // @ts-ignore
+          focusLayer = L.geoJSON(layer.toGeoJSON()).addTo(map);
         })
       },
       style: {
@@ -35,8 +50,23 @@
         fillOpacity: 1,
         color: '#fff',
         weight: 1,
+        className: 'map-layer',
       }
     }).addTo(map);
+
+    // Wrap them in a group
+    d3.selectAll('.map-layer').each(function() {
+      const el = this;
+      if (d3.select('.wrapped').empty()) {
+        // @ts-ignore
+        d3.select(el.parentNode)
+        .insert('g')
+        .attr('class', 'wrapped')
+        .append(() => el)
+      } else {
+        d3.select('.wrapped').append(() => el)
+      }
+    });
   })
 
   function revealMap() {
@@ -51,7 +81,7 @@
    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
    crossorigin=""/>
 
-<div id="map-wrapper" style="filter: blur({mapBlurred ? '4px' : '0px'});" />
+<div id="map-wrapper" />
 {#if !hidden}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div on:click={revealMap} id="map-cover" />
@@ -60,21 +90,27 @@
     <p>Visualising data</p>
   </div>
 {/if}
+{#if focusCountry}
+  <CountryInfo name={focusCountry}></CountryInfo>
+{/if}
 <style lang="css">
   #map-wrapper {
     width: 100vw;
     height: 100vh;
     background-color: rgb(15, 34, 69);
-    filter: blur(6px);
     transition: filter 1000ms ease;
+    position: relative;
+    z-index: 0;
   }
   #map-cover {
     position: fixed;
+    z-index: 1;
     inset: 0 0;
     width: 100vw;
     height: 100vw;
   }
   #info {
+    z-index: 2;
     position: fixed;
     inset: 50% 50%;
     transform: translate(-50%, -50%);
