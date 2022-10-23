@@ -41,6 +41,12 @@
 
           // @ts-ignore
           focusLayer = L.geoJSON(layer.toGeoJSON()).addTo(map);
+
+          map.once('drag', () => {
+            focusLayer && map.removeLayer(focusLayer);
+            focusCountry = null;
+            mapBlurred = false;
+          })
         })
       },
       style: {
