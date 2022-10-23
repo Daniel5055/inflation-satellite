@@ -1,74 +1,82 @@
 <script>
   import { onMount } from 'svelte';
   import * as d3 from 'd3'
+  import L from 'leaflet'
 
-  let svgId;
-
-  let windowHeight;
-  let windowWidth;
+  let mapBlurred = true;
+  let hidden = false;
 
   onMount(async () => {
-    const svg = d3.select(svgId);
-    
-    const width = 400;
-    const height = 400;
-
-    const projection = d3.geoMercator()
-     .scale(width / 2 / Math.PI)
-     .translate([width / 2, height / 2]);
-
     const mapData = await d3.json("/custom.geo.json");
 
-    svg.append('g')
-      .selectAll('path')
-      // @ts-ignore
-      .data(mapData.features)
-      .enter()
-      .append('path')
-      .attr('fill', '#69b3a2')
-      .attr('d', d3.geoPath().projection(projection))
-      .style('stroke', '#fff')
-      .style('stroke-width', '0.1')
+    const map = L
+      .map('map-wrapper', {
+        center: [48, -32],
+        zoom: 4,
+      })
+      .setMaxBounds(L.latLngBounds([-55, -180], [90, 180]))
+      .setMaxZoom(6)
+      .setMinZoom(3);
 
-    const g = svg.select('g');
-
-    const zoom = d3.zoom().scaleExtent([1, 8]).on('zoom', zoomed)
-    svg.call(zoom);
-    function zoomed(event) {
-      let {transform} = event;
-      const ratio = windowHeight / windowWidth;
-
-      if (Math.abs(transform.x) > width * (transform.k - 1)) {
-        transform.x = width * -(transform.k - 1) 
-      } else if (transform.x > 0) {
-        transform.x = 0;
+    // @ts-ignore
+    L.geoJSON(mapData, {
+      clickable: false,
+      style: {
+        stroke: true,
+        fill: true,
+        fillColor: '#324361',
+        fillOpacity: 1,
+        color: '#fff',
+        weight: 1,
       }
-      if (Math.abs(transform.y) > height * (1 - ratio) + (transform.k - 1) * height) {
-        transform.y = height * -(1 - ratio) + -(transform.k - 1) * height 
-      } else if (transform.y > 0) {
-        transform.y = 0;
-      }
-      g.attr('transform', transform)
-      g.attr('stroke', 1 / transform.k)
-    }
+    }).addTo(map);
   })
 
+  function revealMap() {
+    mapBlurred = false;
+  }
+  function hideOverlay() {
+    hidden = true;
+  }
 </script>
 
-<svelte:window bind:innerHeight={windowHeight} bind:innerWidth={windowWidth} />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+   integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+   crossorigin=""/>
 
-<div id="map-wrapper">
-  <svg bind:this={svgId} width="100%" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid" id="map"></svg>
+<div id="map-wrapper" style="filter: blur({mapBlurred ? '4px' : '0px'});">
 </div>
-
+{#if !hidden}
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <div on:click={revealMap} id="map-cover" />
+  <div id="info" style="opacity: {mapBlurred ? '1' : '0'}" on:transitionend={hideOverlay}>
+    <h1>Inflation Satellite</h1>
+    <p>Visualising data</p>
+  </div>
+{/if}
 <style lang="css">
   #map-wrapper {
     width: 100vw;
     height: 100vh;
-    overflow-y: hidden;
+    background-color: rgb(15, 34, 69);
+    filter: blur(6px);
+    transition: filter 1000ms ease;
   }
-
-  #map {
+  #map-cover {
+    position: fixed;
+    inset: 0 0;
+    width: 100vw;
+    height: 100vw;
+  }
+  #info {
+    position: fixed;
+    inset: 50% 50%;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 2px #0008);
+    border-radius: 20px;
+    width: 400px;
+    height: 400px;
+    background-color: #BBB8;
+    transition: opacity 500ms ease-in;
   }
 </style>
-
