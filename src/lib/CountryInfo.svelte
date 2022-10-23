@@ -4,7 +4,7 @@
 </script>
 
 
-<div id="overlay">
+<div id="overlay" style={name ? "transform: none" : ""}>
   <h1>{name}</h1>
   hello there
 </div>
@@ -19,7 +19,8 @@
     width: 400px;
     height: 400px;
     background-color: #AAA8;
-    transition: opacity 500ms ease-in;
+    transition: transform 500ms ease-out;
+    transform: translateX(450px);
     z-index: 2;
   }
 </style>

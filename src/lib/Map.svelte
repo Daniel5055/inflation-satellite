@@ -31,16 +31,28 @@
           // @ts-ignore
           // Pan to box
           map.fitBounds(layer.getBounds())
-          map.once('moveend', () => setTimeout(() => {
+          map.once('moveend', () => {
             mapBlurred = true;
-          }, 200))
-          console.log(layer)
+          });
           focusCountry = feature.properties.name;
 
           focusLayer && map.removeLayer(focusLayer);
 
           // @ts-ignore
-          focusLayer = L.geoJSON(layer.toGeoJSON()).addTo(map);
+          focusLayer = L.geoJSON(layer.toGeoJSON(), {
+            style: {
+              stroke: true,
+              fill: true,
+              fillColor: '#324361',
+              fillOpacity: 1,
+              color: '#fff',
+              weight: 1,
+            }
+          }).addTo(map).once('click', () => {
+            focusLayer && map.removeLayer(focusLayer);
+            focusCountry = null;
+            mapBlurred = false;
+          });
 
           map.once('drag', () => {
             focusLayer && map.removeLayer(focusLayer);
@@ -57,7 +69,7 @@
         color: '#fff',
         weight: 1,
         className: 'map-layer',
-      }
+      },
     }).addTo(map);
 
     // Wrap them in a group
@@ -96,9 +108,7 @@
     <p>Visualising data</p>
   </div>
 {/if}
-{#if focusCountry}
-  <CountryInfo name={focusCountry}></CountryInfo>
-{/if}
+<CountryInfo name={focusCountry}></CountryInfo>
 <style lang="css">
   #map-wrapper {
     width: 100vw;
