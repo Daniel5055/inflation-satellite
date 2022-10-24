@@ -3,9 +3,12 @@
   import * as d3 from 'd3'
   import L from 'leaflet'
   import CountryInfo from './CountryInfo.svelte'
+  import { fade } from 'svelte/transition';
 
   let mapBlurred = true;
-  let hidden = false;
+
+  let showOverlay = true;
+  let showCountryInfo = false;
   let focusCountry = null;
   let focusLayer = null;
 
@@ -36,6 +39,8 @@
           });
           focusCountry = feature.properties.name;
 
+          showCountryInfo = true;
+
           focusLayer && map.removeLayer(focusLayer);
 
           // @ts-ignore
@@ -52,12 +57,14 @@
             focusLayer && map.removeLayer(focusLayer);
             focusCountry = null;
             mapBlurred = false;
+            showCountryInfo = false;
           });
 
           map.once('drag', () => {
             focusLayer && map.removeLayer(focusLayer);
             focusCountry = null;
             mapBlurred = false;
+            showCountryInfo = false;
           })
         })
       },
@@ -89,9 +96,7 @@
 
   function revealMap() {
     mapBlurred = false;
-  }
-  function hideOverlay() {
-    hidden = true;
+    showOverlay = false;
   }
 </script>
 
@@ -100,15 +105,17 @@
    crossorigin=""/>
 
 <div id="map-wrapper" />
-{#if !hidden}
+{#if showOverlay}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div on:click={revealMap} id="map-cover" />
-  <div id="info" style="opacity: {mapBlurred ? '1' : '0'}" on:transitionend={hideOverlay}>
+  <div id="info" out:fade={{duration: 500}}>
     <h1>Inflation Satellite</h1>
     <p>Visualising data</p>
   </div>
 {/if}
-<CountryInfo name={focusCountry}></CountryInfo>
+{#if showCountryInfo}
+  <CountryInfo name={focusCountry}></CountryInfo>
+{/if}
 <style lang="css">
   #map-wrapper {
     width: 100vw;
@@ -135,6 +142,5 @@
     width: 400px;
     height: 400px;
     background-color: #BBB1;
-    transition: opacity 500ms ease-in;
   }
 </style>

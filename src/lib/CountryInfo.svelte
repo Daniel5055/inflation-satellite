@@ -1,10 +1,13 @@
 <script>
+    import { fade } from "svelte/transition";
+
+
   export let name;
 
 </script>
 
 
-<div id="overlay" style={name ? "transform: none" : ""}>
+<div id="overlay" transition:fade={{ duration: 500, delay: 300 }}>
   <h1>{name}</h1>
   hello there
 </div>
@@ -19,8 +22,6 @@
     width: 400px;
     height: 400px;
     background-color: #AAA8;
-    transition: transform 500ms ease-out;
-    transform: translateX(450px);
     z-index: 2;
   }
 </style>
