@@ -4,6 +4,7 @@
   import L from 'leaflet'
   import CountryInfo from './CountryInfo.svelte'
   import { fade } from 'svelte/transition';
+    import MapToolbar from './MapToolbar.svelte';
 
   let mapBlurred = true;
 
@@ -60,6 +61,8 @@
             showCountryInfo = false;
           });
 
+          console.log(feature)
+
           map.once('drag', () => {
             focusLayer && map.removeLayer(focusLayer);
             focusCountry = null;
@@ -78,6 +81,24 @@
         className: 'map-layer',
       },
     }).addTo(map);
+
+    const toolbar = new L.Control({ position: 'bottomleft'})
+    toolbar.onAdd = (map) => {
+
+      const container = L.DomUtil.create('div')
+      const toolbarElement = new MapToolbar({
+        target: container,
+        props: {},
+      });
+
+      toolbarElement.$on('inflation', () => {
+        d3.selectAll('.wrapped>*').attr('fill', '#a85632')
+      })
+
+      return container
+    };
+
+    toolbar.addTo(map);
 
     // Wrap them in a group
     d3.selectAll('.map-layer').each(function() {
@@ -108,7 +129,7 @@
 {#if showOverlay}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div on:click={revealMap} id="map-cover" />
-  <div id="info" out:fade={{duration: 500}}>
+  <div id="info" class="overlay-box" out:fade={{duration: 500}}>
     <h1>Inflation Satellite</h1>
     <p>Visualising data</p>
   </div>
@@ -137,10 +158,9 @@
     position: fixed;
     inset: 50% 50%;
     transform: translate(-50%, -50%);
-    filter: drop-shadow(0 0 5px #000);
-    border-radius: 50px;
     width: 400px;
     height: 400px;
     background-color: #BBB1;
+    text-align: center;
   }
 </style>

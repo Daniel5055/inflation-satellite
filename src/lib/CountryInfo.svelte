@@ -7,7 +7,7 @@
 </script>
 
 
-<div id="overlay" transition:fade={{ duration: 500, delay: 300 }}>
+<div id="overlay" class="overlay-box" transition:fade={{ duration: 500, delay: 300 }}>
   <h1>{name}</h1>
   hello there
 </div>
@@ -15,13 +15,12 @@
 <style lang="css">
   #overlay {
     position: fixed;
-    bottom: 20px;
+    bottom: 5vh;
     right: 10px;
     filter: drop-shadow(0 0 5px #000);
-    border-radius: 50px;
     width: 400px;
-    height: 400px;
-    background-color: #AAA8;
+    height: 90vh;
     z-index: 2;
+    text-align: center;
   }
 </style>
