@@ -6,20 +6,23 @@
   import { fade } from 'svelte/transition';
     import MapToolbar from './MapToolbar.svelte';
 
-  let mapBlurred = true;
+  let mapBlurred = false;
+  let screenBlurred;
 
   let showOverlay = true;
   let showCountryInfo = false;
   let focusCountry = null;
   let focusLayer = null;
 
-  $: mapBlurred ? d3.select('.wrapped').style('filter', 'blur(4px)') : d3.select('.wrapped').style('filter', 'blur(0px)')
+  $: d3.select('.core-map').style('filter', `blur(${mapBlurred ? 4 : 0}px)`);
+  $: d3.select('#map').style('filter', `blur(${screenBlurred ? 4 : 0}px)`);
 
   onMount(async () => {
+    screenBlurred = true;
     const mapData = await d3.json("/custom.geo.json");
 
     const map = L
-      .map('map-wrapper', {
+      .map('map', {
         center: [48, -32],
         zoom: 4,
       })
@@ -92,7 +95,7 @@
       });
 
       toolbarElement.$on('inflation', () => {
-        d3.selectAll('.wrapped>*').attr('fill', '#a85632')
+        d3.selectAll('.core-map>*').attr('fill', '#a85632')
       })
 
       return container
@@ -103,20 +106,20 @@
     // Wrap them in a group
     d3.selectAll('.map-layer').each(function() {
       const el = this;
-      if (d3.select('.wrapped').empty()) {
+      if (d3.select('.core-map').empty()) {
         // @ts-ignore
         d3.select(el.parentNode)
         .insert('g')
-        .attr('class', 'wrapped')
+        .attr('class', 'core-map')
         .append(() => el)
       } else {
-        d3.select('.wrapped').append(() => el)
+        d3.select('.core-map').append(() => el)
       }
     });
   })
 
   function revealMap() {
-    mapBlurred = false;
+    screenBlurred = false;
     showOverlay = false;
   }
 </script>
@@ -125,7 +128,7 @@
    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
    crossorigin=""/>
 
-<div id="map-wrapper" />
+<div id="map" />
 {#if showOverlay}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div on:click={revealMap} id="map-cover" />
@@ -138,7 +141,7 @@
   <CountryInfo name={focusCountry}></CountryInfo>
 {/if}
 <style lang="css">
-  #map-wrapper {
+  #map {
     width: 100vw;
     height: 100vh;
     background-color: rgb(15, 34, 69);
