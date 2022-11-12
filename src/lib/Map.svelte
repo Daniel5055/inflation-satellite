@@ -21,6 +21,7 @@
     screenBlurred = true;
     const mapData = await d3.json("/new.geojson");
     const inflationData = Object.fromEntries((await d3.csv('/inflation.csv')).map((row) => [row["Country Code"], row]));
+    const gdpGrowthData = Object.fromEntries((await d3.csv('/gdp_growth.csv')).map((row) => [row["Country Code"], row]));
     console.log(inflationData)
 
     const map = L
@@ -101,16 +102,15 @@
           // @ts-ignore
           const code = layer.feature.properties["ISO_A3_EH"];
 
-
-          const inflation = Math.round(parseFloat(inflationData[code]?.[2021]));
+          const inflation = Math.round(parseFloat(inflationData[code]?.[2020]));
           
           // @ts-ignore
           //const colours = d3.scaleLinear().domain([-100, 100]).range(['red', 'blue']);
-          const colours = d3.scaleSequential().domain([20, -20]).interpolator(d3.interpolateRdYlBu);
+          const colours = d3.scaleSequentialSqrt().domain([20, -20]).interpolator(d3.interpolateRdBu);
 
           let colour;
           if (isNaN(inflation)) {
-            colour = '#ccc';
+            colour = '#555';
           } else {
             colour = colours(inflation);
           }
@@ -120,7 +120,31 @@
             fillColor: colour
           })
         })
-        //d3.selectAll('.core-map>*').attr('fill', '#a85632')
+      })
+      toolbarElement.$on('gdp growth', () => {
+        mapLayer.eachLayer((layer) => {
+
+          // @ts-ignore
+          const code = layer.feature.properties["ISO_A3_EH"];
+
+          const growth = Math.round(parseFloat(gdpGrowthData[code]?.[2020]));
+          
+          // @ts-ignore
+          //const colours = d3.scaleLinear().domain([-100, 100]).range(['red', 'blue']);
+          const colours = d3.scaleSequentialSqrt().domain([-20, 20]).interpolator(d3.interpolateRdYlGn);
+
+          let colour;
+          if (isNaN(growth)) {
+            colour = '#555';
+          } else {
+            colour = colours(growth);
+          }
+
+          // @ts-ignore
+          layer.setStyle({
+            fillColor: colour
+          })
+        })
       })
 
       return container
