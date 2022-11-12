@@ -5,5 +5,5 @@
 
 </script>
 
-<button on:click={() => dispatch('inflation')}>inflation</button>
-<button on:click={() => dispatch('gdp growth')}>gdp growth</button>
+<button on:click={() => dispatch('inflation')}>Inflation</button>
+<button on:click={() => dispatch('gdp growth')}>GDP Growth</button>
