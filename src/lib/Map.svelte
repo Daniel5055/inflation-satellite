@@ -19,7 +19,9 @@
 
   onMount(async () => {
     screenBlurred = true;
-    const mapData = await d3.json("/custom.geo.json");
+    const mapData = await d3.json("/new.geojson");
+    const inflationData = Object.fromEntries((await d3.csv('/inflation.csv')).map((row) => [row["Country Code"], row]));
+    console.log(inflationData)
 
     const map = L
       .map('map', {
@@ -41,7 +43,8 @@
           map.once('moveend', () => {
             mapBlurred = true;
           });
-          focusCountry = feature.properties.name;
+          focusCountry = feature.properties.NAME;
+          console.log(inflationData[feature.properties['ISO_A3_EH']]);
 
           showCountryInfo = true;
 
@@ -63,8 +66,6 @@
             mapBlurred = false;
             showCountryInfo = false;
           });
-
-          console.log(feature)
 
           map.once('drag', () => {
             focusLayer && map.removeLayer(focusLayer);
@@ -95,7 +96,31 @@
       });
 
       toolbarElement.$on('inflation', () => {
-        d3.selectAll('.core-map>*').attr('fill', '#a85632')
+        mapLayer.eachLayer((layer) => {
+
+          // @ts-ignore
+          const code = layer.feature.properties["ISO_A3_EH"];
+
+
+          const inflation = Math.round(parseFloat(inflationData[code]?.[2021]));
+          
+          // @ts-ignore
+          //const colours = d3.scaleLinear().domain([-100, 100]).range(['red', 'blue']);
+          const colours = d3.scaleSequential().domain([20, -20]).interpolator(d3.interpolateRdYlBu);
+
+          let colour;
+          if (isNaN(inflation)) {
+            colour = '#ccc';
+          } else {
+            colour = colours(inflation);
+          }
+
+          // @ts-ignore
+          layer.setStyle({
+            fillColor: colour
+          })
+        })
+        //d3.selectAll('.core-map>*').attr('fill', '#a85632')
       })
 
       return container
@@ -116,6 +141,8 @@
         d3.select('.core-map').append(() => el)
       }
     });
+
+
   })
 
   function revealMap() {
