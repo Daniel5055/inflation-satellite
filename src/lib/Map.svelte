@@ -11,8 +11,12 @@
 
   let showOverlay = true;
   let showCountryInfo = false;
-  let focusCountry = null;
+  let focusCountryName = null;
+  let focusCountryCode = null;
   let focusLayer = null;
+
+  let inflationData;
+  let gdpGrowthData;
 
   $: d3.select('.core-map').style('filter', `blur(${mapBlurred ? 4 : 0}px)`);
   $: d3.select('#map').style('filter', `blur(${screenBlurred ? 4 : 0}px)`);
@@ -20,8 +24,8 @@
   onMount(async () => {
     screenBlurred = true;
     const mapData = await d3.json("/new.geojson");
-    const inflationData = Object.fromEntries((await d3.csv('/inflation.csv')).map((row) => [row["Country Code"], row]));
-    const gdpGrowthData = Object.fromEntries((await d3.csv('/gdp_growth.csv')).map((row) => [row["Country Code"], row]));
+    inflationData = Object.fromEntries((await d3.csv('/inflation.csv')).map((row) => [row["Country Code"], row]));
+    gdpGrowthData = Object.fromEntries((await d3.csv('/gdp_growth.csv')).map((row) => [row["Country Code"], row]));
     console.log(inflationData)
 
     const map = L
@@ -44,8 +48,8 @@
           map.once('moveend', () => {
             mapBlurred = true;
           });
-          focusCountry = feature.properties.NAME;
-          console.log(inflationData[feature.properties['ISO_A3_EH']]);
+          focusCountryName = feature.properties['NAME'];
+          focusCountryCode = feature.properties['ISO_A3_EH'];
 
           showCountryInfo = true;
 
@@ -63,14 +67,14 @@
             }
           }).addTo(map).once('click', () => {
             focusLayer && map.removeLayer(focusLayer);
-            focusCountry = null;
+            focusCountryName = null;
             mapBlurred = false;
             showCountryInfo = false;
           });
 
           map.once('drag', () => {
             focusLayer && map.removeLayer(focusLayer);
-            focusCountry = null;
+            focusCountryName = null;
             mapBlurred = false;
             showCountryInfo = false;
           })
@@ -189,7 +193,7 @@
   </div>
 {/if}
 {#if showCountryInfo}
-  <CountryInfo name={focusCountry}></CountryInfo>
+  <CountryInfo name={focusCountryName} inflation={inflationData[focusCountryCode]?.[2020]} gdpGrowth={gdpGrowthData[focusCountryCode]?.[2020]}></CountryInfo>
 {/if}
 <style lang="css">
   #map {
