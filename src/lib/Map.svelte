@@ -39,9 +39,9 @@
         center: [48, -32],
         zoom: 4,
       })
-      .setMaxBounds(L.latLngBounds([-60, -180], [90, 180]))
+      .setMaxBounds(L.latLngBounds([-90, -Infinity], [90, Infinity]))
       .setMaxZoom(6)
-      .setMinZoom(3);
+      .setMinZoom(2);
 
     const grid = L.vectorGrid.slicer(mapData, {
       rendererFactory: L.svg.tile,
