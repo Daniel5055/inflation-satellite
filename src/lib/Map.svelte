@@ -20,12 +20,16 @@
   let inflationData;
   let gdpGrowthData;
 
+  function getA3(feature) {
+    return feature.properties['ISO_A3_EH'];
+  }
+
   $: d3.select('.core-map').style('filter', `blur(${mapBlurred ? 4 : 0}px)`);
   $: d3.select('#map').style('filter', `blur(${screenBlurred ? 4 : 0}px)`);
 
   onMount(async () => {
     screenBlurred = true;
-    const mapData = await d3.json("/new.geojson");
+    const mapData = await d3.json("/map50.geojson");
     inflationData = Object.fromEntries((await d3.csv('/inflation.csv')).map((row) => [row["Country Code"], row]));
     gdpGrowthData = Object.fromEntries((await d3.csv('/gdp_growth.csv')).map((row) => [row["Country Code"], row]));
     console.log(inflationData)
@@ -51,20 +55,24 @@
           weight: 1,
         }
       },
-      getFeatureId: (f) => f.properties['ISO_A3_EH'],
+      getFeatureId: getA3,
       interactive: true,
-    }).addTo(map)
-
-
-    grid.setFeatureStyle('GBR', {
-          stroke: true,
-          fill: true,
-          fillColor: '#000',
-          fillOpacity: 1,
-          color: '#fff',
-          weight: 1,
-        }
-)
+    })
+    /*
+    .on('mouseover', (e) => {
+      console.log(grid.getDataLayerNames())
+      d3.select(e.layer._path).classed('selected', true)
+      const code = getA3(e.layer);
+    })
+    .on('mouseout', (e) => {
+      const code = getA3(e.layer);
+      grid.resetFeatureStyle(code);
+    })
+    .on('click', (e) => {
+      console.log('click 1', e.layer)
+    })
+    */
+    .addTo(map);
 
     // @ts-ignore
     /*
@@ -132,12 +140,8 @@
       });
 
       toolbarElement.$on('inflation', () => {
-        mapLayer.eachLayer((layer) => {
-
-          // @ts-ignore
-          const code = layer.feature.properties["ISO_A3_EH"];
-
-          const inflation = Math.round(parseFloat(inflationData[code]?.[2020]));
+        for (const [code, data] of Object.entries(inflationData)) {
+          const inflation = Math.round(parseFloat(data[2021]));
           
           // @ts-ignore
           //const colours = d3.scaleLinear().domain([-100, 100]).range(['red', 'blue']);
@@ -150,36 +154,40 @@
             colour = colours(inflation);
           }
 
-          // @ts-ignore
-          layer.setStyle({
-            fillColor: colour
+          grid.setFeatureStyle(code, {
+            stroke: true,
+            fill: true,
+            fillColor: colour,
+            fillOpacity: 1,
+            color: '#fff',
+            weight: 1,
           })
-        })
+        }
       })
       toolbarElement.$on('gdp growth', () => {
-        mapLayer.eachLayer((layer) => {
-
-          // @ts-ignore
-          const code = layer.feature.properties["ISO_A3_EH"];
-
-          const growth = Math.round(parseFloat(gdpGrowthData[code]?.[2020]));
+        for (const [code, data] of Object.entries(gdpGrowthData)) {
+          const inflation = Math.round(parseFloat(data[2021]));
           
           // @ts-ignore
           //const colours = d3.scaleLinear().domain([-100, 100]).range(['red', 'blue']);
           const colours = d3.scaleSequentialSqrt().domain([-20, 20]).interpolator(d3.interpolateRdYlGn);
 
           let colour;
-          if (isNaN(growth)) {
+          if (isNaN(inflation)) {
             colour = '#555';
           } else {
-            colour = colours(growth);
+            colour = colours(inflation);
           }
 
-          // @ts-ignore
-          layer.setStyle({
-            fillColor: colour
+          grid.setFeatureStyle(code, {
+            stroke: true,
+            fill: true,
+            fillColor: colour,
+            fillOpacity: 1,
+            color: '#fff',
+            weight: 1,
           })
-        })
+        }
       })
 
       return container
