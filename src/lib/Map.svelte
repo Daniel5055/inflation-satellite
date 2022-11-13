@@ -4,7 +4,9 @@
   import L from 'leaflet'
   import CountryInfo from './CountryInfo.svelte'
   import { fade } from 'svelte/transition';
-    import MapToolbar from './MapToolbar.svelte';
+  import MapToolbar from './MapToolbar.svelte';
+  // @ts-ignore
+  import __ from 'leaflet.vectorgrid/dist/Leaflet.VectorGrid';
 
   let mapBlurred = false;
   let screenBlurred;
@@ -37,7 +39,35 @@
       .setMaxZoom(6)
       .setMinZoom(3);
 
+    const grid = L.vectorGrid.slicer(mapData, {
+      rendererFactory: L.svg.tile,
+      vectorTileLayerStyles: {
+        sliced: {
+          stroke: true,
+          fill: true,
+          fillColor: '#324361',
+          fillOpacity: 1,
+          color: '#fff',
+          weight: 1,
+        }
+      },
+      getFeatureId: (f) => f.properties['ISO_A3_EH'],
+      interactive: true,
+    }).addTo(map)
+
+
+    grid.setFeatureStyle('GBR', {
+          stroke: true,
+          fill: true,
+          fillColor: '#000',
+          fillOpacity: 1,
+          color: '#fff',
+          weight: 1,
+        }
+)
+
     // @ts-ignore
+    /*
     const mapLayer = L.geoJSON(mapData, {
       onEachFeature: (feature, layer) => {
         // @ts-ignore
@@ -90,6 +120,7 @@
         className: 'map-layer',
       },
     }).addTo(map);
+    */
 
     const toolbar = new L.Control({ position: 'bottomleft'})
     toolbar.onAdd = (map) => {
