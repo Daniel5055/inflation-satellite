@@ -6,6 +6,7 @@
   import { fade } from 'svelte/transition';
   import MapToolbar from './MapToolbar.svelte';
   import 'leaflet.vectorgrid/dist/Leaflet.VectorGrid';
+  import { customSlicer } from './VectorGrid';
 
   let mapBlurred = false;
   let screenBlurred;
@@ -42,7 +43,7 @@
       .setMaxZoom(6)
       .setMinZoom(2);
 
-    const grid = L.vectorGrid.slicer(mapData, {
+    const grid = customSlicer(mapData, {
       rendererFactory: L.svg.tile,
       vectorTileLayerStyles: {
         sliced: {
@@ -52,25 +53,24 @@
           fillOpacity: 1,
           color: '#fff',
           weight: 1,
+          className: 'tile',
         }
       },
       getFeatureId: getA3,
       interactive: true,
     })
-    /*
-    .on('mouseover', (e) => {
-      console.log(grid.getDataLayerNames())
-      d3.select(e.layer._path).classed('selected', true)
+    .on('mouseover', function (e) {
       const code = getA3(e.layer);
+      //console.log('highlighted', code, this.setFeatureStyle)
+      this.setFeatureClass(code, 'highlighted', true);
     })
-    .on('mouseout', (e) => {
+    .on('mouseout', function (e) {
       const code = getA3(e.layer);
-      grid.resetFeatureStyle(code);
+      this.setFeatureClass(code, 'highlighted', false);
     })
     .on('click', (e) => {
       console.log('click 1', e.layer)
     })
-    */
     .addTo(map);
 
     // @ts-ignore
@@ -258,5 +258,13 @@
     height: 400px;
     background-color: #BBB1;
     text-align: center;
+  }
+  :global(path.tile) {
+    filter: none;
+    transition: filter 200ms ease;
+  }
+
+  :global(path.highlighted) {
+    filter: brightness(1.2);
   }
 </style>
