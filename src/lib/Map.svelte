@@ -5,8 +5,7 @@
   import CountryInfo from './CountryInfo.svelte'
   import { fade } from 'svelte/transition';
   import MapToolbar from './MapToolbar.svelte';
-  // @ts-ignore
-  import __ from 'leaflet.vectorgrid/dist/Leaflet.VectorGrid';
+  import 'leaflet.vectorgrid/dist/Leaflet.VectorGrid';
 
   let mapBlurred = false;
   let screenBlurred;
