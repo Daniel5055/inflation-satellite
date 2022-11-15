@@ -61,7 +61,6 @@
     })
     .on('mouseover', function (e) {
       const code = getA3(e.layer);
-      //console.log('highlighted', code, this.setFeatureStyle)
       this.setFeatureClass(code, 'highlighted', true);
     })
     .on('mouseout', function (e) {
@@ -263,8 +262,9 @@
     filter: none;
     transition: filter 200ms ease;
   }
-
   :global(path.highlighted) {
     filter: brightness(1.2);
+  }
+  :global(.leaflet-tile-container) {
   }
 </style>
