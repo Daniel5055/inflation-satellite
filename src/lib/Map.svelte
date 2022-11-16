@@ -5,8 +5,8 @@
   import CountryInfo from './CountryInfo.svelte'
   import { fade } from 'svelte/transition';
   import MapToolbar from './MapToolbar.svelte';
-  import 'leaflet.vectorgrid/dist/Leaflet.VectorGrid';
-  import { customSlicer } from './VectorGrid';
+  import '@ecds/leaflet.vectorgrid';
+  import { cbSlicer, cbTile } from './VectorGrid';
 
   let mapBlurred = false;
   let screenBlurred;
@@ -43,8 +43,8 @@
       .setMaxZoom(6)
       .setMinZoom(2);
 
-    const grid = customSlicer(mapData, {
-      rendererFactory: L.svg.tile,
+    const grid = cbSlicer(mapData, {
+      rendererFactory: cbTile,
       vectorTileLayerStyles: {
         sliced: {
           stroke: true,
