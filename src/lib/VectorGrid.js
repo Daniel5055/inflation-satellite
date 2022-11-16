@@ -15,7 +15,7 @@ const CBTile = L.SVG.Tile.extend({
   _initPath: function (layer) {
     // @ts-ignore
     L.SVG.Tile.prototype._initPath.call(this, layer)
-    layer.classNames?.map((name) => L.DomUtil.addClass(layer._path, name));
+    layer._classNames?.map((name) => L.DomUtil.addClass(layer._path, name));
   },
 });
 
@@ -23,34 +23,42 @@ const CBTile = L.SVG.Tile.extend({
 // Class-Based Slicer
 // Add better class manipulation of features 
 const CBSlicer = L.VectorGrid.Slicer.extend({
-  _additionalClassNames: [],
+  _additionalClassNames: {},
+	_allClassNames: [],
 
   _createLayer: function(feat, pxPerExtent) {
     // @ts-ignore
     const layer = L.VectorGrid.Slicer.prototype._createLayer.call(this, feat, pxPerExtent);
-    layer.classNames = this._additionalClassNames[this.options.getFeatureId(feat)];
+
+		const id = this.options.getFeatureId(feat);
+    layer._classNames = this._allClassNames;
+		if (this._additionalClassNames[id]) {
+			layer._classNames = layer._classNames.concat(this._additionalClassNames[id]);
+		}
     return layer;
   },
 
   // ClassName seems to only be set in style when rendering
   // And also overwrites, hence this method acts like the d3 classed method
   setFeatureClass: function (id, className, added) {
+		// Add or remove from class names
     if (added && !this._additionalClassNames[id]?.includes(className)) {
-      this._additionalClassNames[id]
-        ? this._additionalClassNames[id].push(className)
-        : this._additionalClassNames[id] = [className];
-    } else if (!added && this._additionalClassNames[id]?.includes(className)) {
+			if (!this._additionalClassNames[id]) {
+				this._additionalClassNames[id] = [];
+			}
+      this._additionalClassNames[id].push(className)
+    } else if (!added) {
       this._additionalClassNames[id] =
         this._additionalClassNames[id].filter((name) => name !== className);
     }
 
-    for (var tileKey in this._vectorTiles) {
-      var tile = this._vectorTiles[tileKey];
-      var features = tile._features;
-      var data = features[id];
+    for (const tileKey in this._vectorTiles) {
+      const tile = this._vectorTiles[tileKey];
+      const features = tile._features;
+      const data = features[id];
       if (data) {
 				for (const d of data) {
-					var feat = d.feature;
+					const feat = d.feature;
 					if (added) {
 						feat && tile.addClass(feat, className)
 					} else {
@@ -58,6 +66,32 @@ const CBSlicer = L.VectorGrid.Slicer.extend({
 					}
 				}
       }
+    }
+    return this;
+  },
+
+  setAllFeaturesClass: function (className, added) {
+		// Add or remove from class names
+    if (added && !this._allClassNames?.includes(className)) {
+      this._allClassNames.push(className)
+    } else if (!added) {
+      this._allClassNames
+        this._allClassNames.filter((name) => name !== className);
+    }
+
+    for (const tileKey in this._vectorTiles) {
+      const tile = this._vectorTiles[tileKey];
+      const features = tile._features;
+			for (const id in features) {
+				for (const d of features[id]) {
+					const feat = d.feature;
+					if (added) {
+						feat && tile.addClass(feat, className)
+					} else {
+						feat && tile.removeClass(feat, className)
+					}
+				}
+			}
     }
     return this;
   },
