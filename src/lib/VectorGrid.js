@@ -45,7 +45,7 @@ const CBSlicer = L.VectorGrid.Slicer.extend({
   // ClassName seems to only be set in style when rendering
   // And also overwrites, hence this method acts like the d3 classed method
   // If id is null then applies to all existing
-  setFeatureClass: function (id, className, added) {
+  setFeatureClass: function (id, className, added = true) {
     // Add or remove from class names sets
 
     // Whether to iterate through all the class names or just the one for the id
@@ -96,7 +96,7 @@ const CBSlicer = L.VectorGrid.Slicer.extend({
     return this;
   },
 
-  setGlobalClass: function (className, added) {
+  setGlobalClass: function (className, added = true) {
     // Add or remove from class names
     if (added) {
       this._globalClassNames.add(className);

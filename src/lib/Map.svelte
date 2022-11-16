@@ -56,7 +56,6 @@
           fillOpacity: 1,
           color: '#fff',
           weight: 1,
-          className: 'tile',
         }
       },
       getFeatureId: getA3,
@@ -112,6 +111,8 @@
       }
     })
     .addTo(map);
+
+    grid.setGlobalClass('tile');
 
     // @ts-ignore
     /*
