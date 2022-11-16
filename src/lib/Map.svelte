@@ -58,6 +58,7 @@
       },
       getFeatureId: getA3,
       interactive: true,
+      noWrap: true,
     })
     .on('mouseover', function (e) {
       const code = getA3(e.layer);

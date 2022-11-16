@@ -1,5 +1,6 @@
 import L, { DomUtil } from "leaflet";
 import "leaflet.vectorgrid";
+import { xlink_attr } from "svelte/internal";
 
 // Add class manipulation methods to renderer
 L.SVG.Tile.include({
@@ -18,15 +19,6 @@ L.SVG.Tile.include({
   },
 });
 
-// @ts-ignore
-const wrapCoords = L.GridLayer.prototype._wrapCoords;
-console.log(L.GridLayer.prototype)
-
-L.GridLayer.include({
-  _wrapCoords: (coords) => coords,
-})
-
-// @ts-ignore
 const CustomSlicer = L.VectorGrid.Slicer.extend({
   _additionalClassNames: [],
 
@@ -49,16 +41,13 @@ const CustomSlicer = L.VectorGrid.Slicer.extend({
   createTile: function(coords, done) {
 		var storeFeatures = this.options.getFeatureId;
 
-    var rawCoords = coords;
-    coords = wrapCoords.bind(L.GridLayer.prototype)(coords);
-
 		var tileSize = this.getTileSize();
 		var renderer = this.options.rendererFactory(coords, tileSize, this.options);
 
 		var vectorTilePromise = this._getVectorTilePromise(coords);
 
 		if (storeFeatures) {
-			this._vectorTiles[this._tileCoordsToKey(rawCoords)] = renderer;
+			this._vectorTiles[this._tileCoordsToKey(coords)] = renderer;
 			renderer._features = {};
 		}
 
@@ -66,10 +55,8 @@ const CustomSlicer = L.VectorGrid.Slicer.extend({
 			for (var layerName in vectorTile.layers) {
 				this._dataLayerNames[layerName] = true;
 				var layer = vectorTile.layers[layerName];
-				console.log(layer, 'layer', vectorTile.coords);
 
 				var pxPerExtent = this.getTileSize().divideBy(layer.extent);
-				console.log(this.getTileSize(), pxPerExtent);
 
 				var layerStyle = this.options.vectorTileLayerStyles[ layerName ] ||
 				L.Path.prototype.options;
@@ -116,10 +103,14 @@ const CustomSlicer = L.VectorGrid.Slicer.extend({
 					}
 
 					if (storeFeatures) {
-						renderer._features[id] = [{
+						if (!renderer._features[id]) {
+							renderer._features[id] = [];
+						}
+
+						renderer._features[id].push({
 							layerName: layerName,
 							feature: featureLayer
-						}, ...(renderer._features[id] ?? [])];
+						});
 					}
 				}
 
@@ -136,7 +127,6 @@ const CustomSlicer = L.VectorGrid.Slicer.extend({
   // ClassName seems to only be set in style when rendering
   // And also overwrites, hence this method acts like the d3 classed method
   setFeatureClass: function (id, className, added) {
-    console.log(this._vectorTiles, 'vt')
     if (added && !this._additionalClassNames[id]?.includes(className)) {
       this._additionalClassNames[id]
         ? this._additionalClassNames[id].push(className)
@@ -154,7 +144,6 @@ const CustomSlicer = L.VectorGrid.Slicer.extend({
 				for (const d of data) {
 					var feat = d.feature;
 					if (added) {
-						console.log(tileKey, className, 'tile', tile, 'feat', feat)
 						feat && tile.addClass(feat, className)
 					} else {
 						feat && tile.removeClass(feat, className)
