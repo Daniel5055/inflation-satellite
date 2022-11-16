@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import * as d3 from 'd3'
-  import L from 'leaflet'
+  import L, { gridLayer } from 'leaflet'
   import CountryInfo from './CountryInfo.svelte'
   import { fade } from 'svelte/transition';
   import MapToolbar from './MapToolbar.svelte';
@@ -10,6 +10,8 @@
 
   let mapBlurred = false;
   let screenBlurred;
+  let grid;
+  let mapContainer;
 
   let showOverlay = true;
   let showCountryInfo = false;
@@ -38,12 +40,13 @@
       .map('map', {
         center: [48, -32],
         zoom: 4,
+        doubleClickZoom: false,
       })
       .setMaxBounds(L.latLngBounds([-90, -Infinity], [90, Infinity]))
       .setMaxZoom(6)
       .setMinZoom(2);
 
-    const grid = cbSlicer(mapData, {
+    grid = cbSlicer(mapData, {
       rendererFactory: cbTile,
       vectorTileLayerStyles: {
         sliced: {
@@ -68,8 +71,45 @@
       const code = getA3(e.layer);
       this.setFeatureClass(code, 'highlighted', false);
     })
-    .on('click', (e) => {
-      console.log('click 1', e.layer)
+    .on('mousedown', function (e) {
+      const code = getA3(e.layer);
+      this.setFeatureClass(code, 'active', true);
+    })
+    .on('mouseup', function (e) {
+      const code = getA3(e.layer);
+      this.setFeatureClass(code, 'active', false);
+    })
+    .on('click', function (e) {
+      const code = getA3(e.layer);
+      if (!focusCountryCode) {
+        this.setGlobalClass('deselected', true)
+        this.setFeatureClass(code, 'selected', true)
+        focusCountryCode = code;
+
+        // Filter out countries to prevent clicking on fade out
+        const onFade = (e) => {
+          console.log(e, 'trigger')
+          if (!grid.getFilter() && e.propertyName === 'opacity') {
+            if (focusCountryCode) {
+              grid.setFilter((properties) => {
+                return focusCountryCode === getA3({properties});
+              });
+            }
+            mapContainer.removeEventListener('transitionend', onFade)
+          }
+        }
+        mapContainer.addEventListener('transitionend', onFade)
+      } else {
+        grid.getFilter() && grid.setFilter(undefined);
+
+        // Clear the mouse related classnames to stuck classes
+        this.setFeatureClass(null, 'highlighted', false)
+        this.setFeatureClass(null, 'active', false)
+
+        this.setGlobalClass('deselected', false)
+        this.setFeatureClass(code, 'selected', false)
+        focusCountryCode = null;
+      }
     })
     .addTo(map);
 
@@ -193,35 +233,20 @@
     };
 
     toolbar.addTo(map);
-
-    // Wrap them in a group
-    d3.selectAll('.map-layer').each(function() {
-      const el = this;
-      if (d3.select('.core-map').empty()) {
-        // @ts-ignore
-        d3.select(el.parentNode)
-        .insert('g')
-        .attr('class', 'core-map')
-        .append(() => el)
-      } else {
-        d3.select('.core-map').append(() => el)
-      }
-    });
-
-
   })
 
   function revealMap() {
     screenBlurred = false;
     showOverlay = false;
   }
+
 </script>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
    crossorigin=""/>
 
-<div id="map" />
+<div bind:this={mapContainer} id="map" />
 {#if showOverlay}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div on:click={revealMap} id="map-cover" />
@@ -261,11 +286,23 @@
   }
   :global(path.tile) {
     filter: none;
-    transition: filter 200ms ease;
+    transition: filter 200ms ease-out, opacity 500ms ease-in;
   }
   :global(path.highlighted) {
     filter: brightness(1.2);
   }
-  :global(.leaflet-tile-container) {
+  :global(path.active) {
+    filter: brightness(0.8);
   }
+  :global(path.deselected) {
+    opacity: 0;
+  }
+  :global(path.selected) {
+    opacity: 1;
+  }
+  /*
+  :global(.leaflet-tile-pane) {
+    filter: blur(2px)
+  }
+  */
 </style>
