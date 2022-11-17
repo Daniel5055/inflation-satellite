@@ -7,13 +7,11 @@
   import MapToolbar from './MapToolbar.svelte';
   import '@ecds/leaflet.vectorgrid';
   import { cbSlicer, cbTile } from './VectorGrid';
+  import IntroOverlay from './IntroOverlay.svelte';
 
-  let mapBlurred = false;
-  let screenBlurred;
   let grid;
   let mapContainer;
 
-  let showOverlay = true;
   let showCountryInfo = false;
   let focusCountryName = null;
   let focusCountryCode = null;
@@ -26,11 +24,7 @@
     return feature.properties['ISO_A3_EH'];
   }
 
-  $: d3.select('.core-map').style('filter', `blur(${mapBlurred ? 4 : 0}px)`);
-  $: d3.select('#map').style('filter', `blur(${screenBlurred ? 4 : 0}px)`);
-
   onMount(async () => {
-    screenBlurred = true;
     const mapData = await d3.json("/map50.geojson");
     inflationData = Object.fromEntries((await d3.csv('/inflation.csv')).map((row) => [row["Country Code"], row]));
     gdpGrowthData = Object.fromEntries((await d3.csv('/gdp_growth.csv')).map((row) => [row["Country Code"], row]));
@@ -114,62 +108,6 @@
 
     grid.setGlobalClass('tile');
 
-    // @ts-ignore
-    /*
-    const mapLayer = L.geoJSON(mapData, {
-      onEachFeature: (feature, layer) => {
-        // @ts-ignore
-        layer.on('click', () => {
-          // @ts-ignore
-          // Pan to box
-          map.fitBounds(layer.getBounds())
-          map.once('moveend', () => {
-            mapBlurred = true;
-          });
-          focusCountryName = feature.properties['NAME'];
-          focusCountryCode = feature.properties['ISO_A3_EH'];
-
-          showCountryInfo = true;
-
-          focusLayer && map.removeLayer(focusLayer);
-
-          // @ts-ignore
-          focusLayer = L.geoJSON(layer.toGeoJSON(), {
-            style: {
-              stroke: true,
-              fill: true,
-              fillColor: '#324361',
-              fillOpacity: 1,
-              color: '#fff',
-              weight: 1,
-            }
-          }).addTo(map).once('click', () => {
-            focusLayer && map.removeLayer(focusLayer);
-            focusCountryName = null;
-            mapBlurred = false;
-            showCountryInfo = false;
-          });
-
-          map.once('drag', () => {
-            focusLayer && map.removeLayer(focusLayer);
-            focusCountryName = null;
-            mapBlurred = false;
-            showCountryInfo = false;
-          })
-        })
-      },
-      style: {
-        stroke: true,
-        fill: true,
-        fillColor: '#324361',
-        fillOpacity: 1,
-        color: '#fff',
-        weight: 1,
-        className: 'map-layer',
-      },
-    }).addTo(map);
-    */
-
     const toolbar = new L.Control({ position: 'bottomleft'})
     toolbar.onAdd = (map) => {
 
@@ -235,12 +173,6 @@
 
     toolbar.addTo(map);
   })
-
-  function revealMap() {
-    screenBlurred = false;
-    showOverlay = false;
-  }
-
 </script>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
@@ -248,14 +180,9 @@
    crossorigin=""/>
 
 <div bind:this={mapContainer} id="map" />
-{#if showOverlay}
-  <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div on:click={revealMap} id="map-cover" />
-  <div id="info" class="overlay-box" out:fade={{duration: 500}}>
-    <h1>Inflation Satellite</h1>
-    <p>Visualising data</p>
-  </div>
-{/if}
+
+<IntroOverlay />
+
 {#if showCountryInfo}
   <CountryInfo name={focusCountryName} inflation={inflationData[focusCountryCode]?.[2020]} gdpGrowth={gdpGrowthData[focusCountryCode]?.[2020]}></CountryInfo>
 {/if}
@@ -267,23 +194,6 @@
     transition: filter 1000ms ease;
     position: relative;
     z-index: 0;
-  }
-  #map-cover {
-    position: fixed;
-    z-index: 1;
-    inset: 0 0;
-    width: 100vw;
-    height: 100vw;
-  }
-  #info {
-    z-index: 2;
-    position: fixed;
-    inset: 50% 50%;
-    transform: translate(-50%, -50%);
-    width: 400px;
-    height: 400px;
-    background-color: #BBB1;
-    text-align: center;
   }
   :global(path.tile) {
     filter: none;
