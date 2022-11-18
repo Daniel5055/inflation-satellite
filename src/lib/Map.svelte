@@ -1,34 +1,31 @@
 <script>
-  import { onMount } from 'svelte';
+  import { getContext, onMount } from 'svelte';
   import * as d3 from 'd3'
-  import L, { gridLayer } from 'leaflet'
+  import L from 'leaflet'
   import CountryInfo from './CountryInfo.svelte'
-  import { fade } from 'svelte/transition';
   import MapToolbar from './MapToolbar.svelte';
   import '@ecds/leaflet.vectorgrid';
   import { cbSlicer, cbTile } from './VectorGrid';
   import IntroOverlay from './IntroOverlay.svelte';
+  import { dataKey } from './LoadData.svelte';
 
   let grid;
   let mapContainer;
 
-  let showCountryInfo = false;
-  let focusCountryName = null;
   let focusCountryCode = null;
-  let focusLayer = null;
 
   let inflationData;
   let gdpGrowthData;
+
+  const { getMapData } = getContext(dataKey);
 
   function getA3(feature) {
     return feature.properties['ISO_A3_EH'];
   }
 
   onMount(async () => {
-    const mapData = await d3.json("/map50.geojson");
     inflationData = Object.fromEntries((await d3.csv('/inflation.csv')).map((row) => [row["Country Code"], row]));
     gdpGrowthData = Object.fromEntries((await d3.csv('/gdp_growth.csv')).map((row) => [row["Country Code"], row]));
-    console.log(inflationData)
 
     const map = L
       .map('map', {
@@ -40,7 +37,7 @@
       .setMaxZoom(6)
       .setMinZoom(2);
 
-    grid = cbSlicer(mapData, {
+    grid = cbSlicer(getMapData(), {
       rendererFactory: cbTile,
       vectorTileLayerStyles: {
         sliced: {
@@ -183,8 +180,8 @@
 
 <IntroOverlay />
 
-{#if showCountryInfo}
-  <CountryInfo name={focusCountryName} inflation={inflationData[focusCountryCode]?.[2020]} gdpGrowth={gdpGrowthData[focusCountryCode]?.[2020]}></CountryInfo>
+{#if focusCountryCode}
+  <CountryInfo name={focusCountryCode} inflation={inflationData[focusCountryCode]?.[2020]} gdpGrowth={gdpGrowthData[focusCountryCode]?.[2020]}></CountryInfo>
 {/if}
 <style lang="css">
   #map {
