@@ -7,7 +7,7 @@
   import '@ecds/leaflet.vectorgrid';
   import { cbSlicer, cbTile } from './VectorGrid';
   import IntroOverlay from './IntroOverlay.svelte';
-  import { dataKey } from './LoadData.svelte';
+  import { dataKey, getCode } from './LoadData.svelte';
 
   let grid;
   let mapContainer;
@@ -18,10 +18,6 @@
   let gdpGrowthData;
 
   const { getMapData } = getContext(dataKey);
-
-  function getA3(feature) {
-    return feature.properties['ISO_A3_EH'];
-  }
 
   onMount(async () => {
     inflationData = Object.fromEntries((await d3.csv('/inflation.csv')).map((row) => [row["Country Code"], row]));
@@ -49,28 +45,28 @@
           weight: 1,
         }
       },
-      getFeatureId: getA3,
+      getFeatureId: getCode,
       interactive: true,
       noWrap: true,
     })
     .on('mouseover', function (e) {
-      const code = getA3(e.layer);
+      const code = getCode(e.layer);
       this.setFeatureClass(code, 'highlighted', true);
     })
     .on('mouseout', function (e) {
-      const code = getA3(e.layer);
+      const code = getCode(e.layer);
       this.setFeatureClass(code, 'highlighted', false);
     })
     .on('mousedown', function (e) {
-      const code = getA3(e.layer);
+      const code = getCode(e.layer);
       this.setFeatureClass(code, 'active', true);
     })
     .on('mouseup', function (e) {
-      const code = getA3(e.layer);
+      const code = getCode(e.layer);
       this.setFeatureClass(code, 'active', false);
     })
     .on('click', function (e) {
-      const code = getA3(e.layer);
+      const code = getCode(e.layer);
       if (!focusCountryCode) {
         this.setGlobalClass('deselected', true)
         this.setFeatureClass(code, 'selected', true)
@@ -82,7 +78,7 @@
           if (!grid.getFilter() && e.propertyName === 'opacity') {
             if (focusCountryCode) {
               grid.setFilter((properties) => {
-                return focusCountryCode === getA3({properties});
+                return focusCountryCode === getCode({properties});
               });
             }
             mapContainer.removeEventListener('transitionend', onFade)
@@ -180,9 +176,8 @@
 
 <IntroOverlay />
 
-{#if focusCountryCode}
-  <CountryInfo name={focusCountryCode} inflation={inflationData[focusCountryCode]?.[2020]} gdpGrowth={gdpGrowthData[focusCountryCode]?.[2020]}></CountryInfo>
-{/if}
+<CountryInfo code={focusCountryCode} />
+
 <style lang="css">
   #map {
     width: 100vw;

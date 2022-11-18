@@ -1,19 +1,28 @@
 <script>
+  import { getContext } from "svelte";
   import { fade } from "svelte/transition";
+  import { dataKey } from "./LoadData.svelte";
 
+  const { getFeatures } = getContext(dataKey);
 
-  export let name;
-  export let inflation;
-  export let gdpGrowth;
-  console.log(inflation);
+  console.log(getContext(dataKey).getFeatures())
+
+  export let code;
+
+  let name;
+
+  $: if (code !== null) {
+    name = getFeatures()?.[code].properties['NAME'];
+    console.log(getFeatures()?.[code]);
+  }
+
 </script>
 
-
-<div id="overlay" class="overlay-box" transition:fade={{ duration: 500, delay: 300 }}>
-  <h1>{name}</h1>
-  <p>Inflation: {parseFloat(inflation).toFixed(2)}%</p>
-  <p>GDP Growth: {parseFloat(gdpGrowth).toFixed(2)}%</p>
-</div>
+{#if code}
+  <div id="overlay" class="overlay-box" transition:fade={{ duration: 500, delay: 300 }}>
+    <h1>{name}</h1>
+  </div>
+{/if}
 
 <style lang="css">
   #overlay {
