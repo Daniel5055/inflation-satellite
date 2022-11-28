@@ -110,6 +110,12 @@
         props: {},
       });
 
+      toolbarElement.$on('none', () => {
+        for (const [code, __] of Object.entries(inflationData)) {
+          grid.resetFeatureStyle(code)
+        }
+      });
+
       toolbarElement.$on('inflation', () => {
         for (const [code, data] of Object.entries(inflationData)) {
           const inflation = Math.round(parseFloat(data[2021]));

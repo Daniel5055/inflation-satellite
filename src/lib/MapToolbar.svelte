@@ -5,5 +5,6 @@
 
 </script>
 
+<button on:click={() => dispatch('none')}>None</button>
 <button on:click={() => dispatch('inflation')}>Inflation</button>
 <button on:click={() => dispatch('gdp growth')}>GDP Growth</button>
