@@ -4,7 +4,7 @@
 </script>
 
 <main>
-  <LoadData path="/map50.geojson">
+  <LoadData mapData="/map50.geojson">
     <Map />
   </LoadData>
 </main>

@@ -3,9 +3,7 @@
   import { slide } from "svelte/transition";
   import { dataKey } from "./LoadData.svelte";
 
-  const { getFeatures } = getContext(dataKey);
-
-  console.log(getContext(dataKey).getFeatures())
+  const { getCountryData } = getContext(dataKey);
 
   export let code;
 
@@ -13,10 +11,10 @@
   let longName;
 
   $: if (code !== null) {
-    name = getFeatures()?.[code].properties['NAME'];
-    longName = getFeatures()?.[code].properties['FORMAL_EN'];
+    name = getCountryData(code)?.name.common
+    longName = getCountryData(code)?.name.official
 
-    console.log(getFeatures()?.[code]);
+    console.log(getCountryData(code));
   }
 
 </script>
@@ -25,7 +23,7 @@
   <div id="overlay" in:slide={{ duration: 500, delay: 300,  }} out:slide={{ duration: 500}}>
     <div id="header" class="overlay-box info-box">
       <h1>{name}</h1>
-      {#if longName}<h2>{longName}</h2>{/if}
+      {#if longName && name !== longName}<h2>{longName}</h2>{/if}
     </div>
     <div id="graph" class="overlay-box info-box">
       Graph
@@ -61,6 +59,7 @@
 
   .info-box {
     padding: 10px;
+    border: #646cff 1px solid;
   }
 
   h1 {

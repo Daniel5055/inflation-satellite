@@ -10,25 +10,28 @@
   import * as d3 from "d3";
   import { onMount, setContext } from "svelte";
 
-
-  export let path = "/map50.geojson";
+  export let mapDataPath = "/map50.geojson";
+  export let countryDataPath = "/countries.json"
 
   let mapData;
-  let features;
+  let countryData
 
   // Load data
   onMount(async () => {
-    mapData = await d3.json(path);
-
-    // @ts-ignore
-    features = Object.fromEntries(mapData.features.map((feature) => [getCode(feature), feature]));
-    console.log(features)
+    mapData = await d3.json(mapDataPath);
+    countryData = await loadCountryData(countryDataPath)
   });
 
   setContext(dataKey, {
     getMapData: () => mapData,
-    getFeatures: () => features,
+    getCountryData: (code) => countryData[code],
   });
+
+  async function loadCountryData(path) {
+    const rawData = await d3.json(path)
+    // @ts-ignore
+    return Object.fromEntries(rawData.map((country) => [country.cca3, country]));
+  }
 </script>
 
 <slot />
