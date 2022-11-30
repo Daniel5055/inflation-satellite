@@ -14,14 +14,10 @@
 
   let focusCountryCode = null;
 
-  let inflationData;
-  let gdpGrowthData;
-
-  const { getMapData } = getContext(dataKey);
+  const { getMapData, getInflationData, getGdpGrowthData, loaded } = getContext(dataKey);
 
   onMount(async () => {
-    inflationData = Object.fromEntries((await d3.csv('/inflation.csv')).map((row) => [row["Country Code"], row]));
-    gdpGrowthData = Object.fromEntries((await d3.csv('/gdp_growth.csv')).map((row) => [row["Country Code"], row]));
+    await loaded;
 
     const map = L
       .map('map', {
@@ -110,13 +106,23 @@
         props: {},
       });
 
+      const inflationData = getInflationData();
+      const gdpGrowthData = getGdpGrowthData();
+
       toolbarElement.$on('none', () => {
+        if (!inflationData) {
+          return;
+        }
+
         for (const [code, __] of Object.entries(inflationData)) {
           grid.resetFeatureStyle(code)
         }
       });
 
       toolbarElement.$on('inflation', () => {
+        if (!inflationData) {
+          return;
+        }
         for (const [code, data] of Object.entries(inflationData)) {
           const inflation = Math.round(parseFloat(data[2021]));
           
@@ -142,6 +148,10 @@
         }
       })
       toolbarElement.$on('gdp growth', () => {
+        if (!gdpGrowthData) {
+          return;
+        }
+
         for (const [code, data] of Object.entries(gdpGrowthData)) {
           const inflation = Math.round(parseFloat(data[2021]));
           
